@@ -9,6 +9,9 @@ import session from 'express-session';
 import MongoDBStorePackage from 'connect-mongodb-session';
 import mongoSanitize from 'express-mongo-sanitize';
 import { fileURLToPath } from 'url';
+import { userProfileJoiObject, userHistoryJoiObject } from "./joiSchema.js";
+
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 if(process.env.NODE_ENV !== 'production') {
@@ -122,6 +125,90 @@ app.use(session({
         maxAge: 1000 * 60 * 60
     }
 }));
+const Schema = mongoose.Schema;
+const UserProfileSchema = new Schema({
+  firebase_id: String,
+  name: String,
+  email: String, 
+  age: Number,
+  country: String,
+  state: String,
+  phone_number: Number
+});
+
+const UserProfile = mongoose.model('UserProfile', UserProfileSchema);
+
+const UserHistorySchema = new Schema({
+  firebase_id: String,
+  destinationName: [String],
+  hotelName: [String],
+  rating: [Number],
+  price: [Number],
+  daysStayed: [Number]
+});
+
+const UserHistory = mongoose.model('UserHistory', UserHistorySchema);
+
+app.post("/createProfile", async (req, res) => {
+  try{
+    const obj = req.body;
+    const {error} = userProfileJoiObject.validate(obj);
+    if(error) {
+      throw error;
+    }
+
+    const userProfileObj = new UserProfile(obj);
+    await userProfileObj.save();
+
+    res.status(200).send("Success");
+  } catch(err) {
+    console.log(err);
+    res.status(400).send("Failure");
+  }
+})
+
+app.post("/createUserHistory", async (req, res) => {
+  try{
+    const obj = req.body;
+    const {error} = userHistoryJoiObject.validate(obj);
+    if(error) {
+      throw error;
+    }
+
+    const userHistoryObject = new UserHistory(obj);
+    await userHistoryObject.save();
+
+    res.status(200).send("Success");
+  } catch(err) {
+    console.log(err);
+    res.status(400).send("Failure");
+  }
+})
+
+app.get("/getUserProfile/:id", async (req, res) => {
+  const id = req.params.id;
+  try {
+      const data = await UserProfile.findById(id);
+      res.json(data);
+  }
+  catch(e) {
+      res.status(404).send(`error: ${e}`);
+  }
+})
+
+app.get("/getUserHistory/:id", async (req, res) => {
+  const id = req.params.id;
+  try {
+      const data = await UserHistory.findById(id);
+      res.json(data);
+  }
+  catch(e) {
+      res.status(404).send(`error: ${e}`);
+  }
+})
+
+
+
 
 app.get("/",  (req, res) => {
   res.send("Hello, Welcome to My backend!!");
@@ -131,3 +218,6 @@ app.get("/",  (req, res) => {
 app.listen(3000, () => {
     console.log("This app is running on http://localhost:3000");
   });
+
+
+  
