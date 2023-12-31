@@ -10,6 +10,7 @@ import MongoDBStorePackage from 'connect-mongodb-session';
 import mongoSanitize from 'express-mongo-sanitize';
 import { fileURLToPath } from 'url';
 import { userProfileJoiObject, userHistoryJoiObject } from "./joiSchema.js";
+import axios from "axios";
 
 import cors from 'cors';
 import OpenAI from "openai";
@@ -249,7 +250,6 @@ app.get("/getUserHistory/:id", async (req, res) => {
   }
 })
 
-
 app.get("/",  (req, res) => {
   res.send("Hello, Welcome to My backend!!");
 })
@@ -291,11 +291,41 @@ app.post("/extract-keywords", async (req, res) => {
     }
 })
 
+app.post("/get-hotels", async (req, res) => {
+  try {
+        const username = "hackathontest";
+        const password = "Hac@48298799";
+        const credentials = btoa(username + ":" + password);
+        const basicAuth = "Basic " + credentials;
+        const apiUrl =
+          "http://api.tbotechnology.in/TBOHolidays_HotelAPI/HotelSearch";
+        const data = req.body.data
+        const response = await axios.post(apiUrl, data, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: basicAuth,
+          },
+        });
+        console.log(response.data.HotelSearchResults);
+        return res.status(200).json({
+          success: "true",
+          data: response.data.HotelSearchResults
+      })
+      }catch (error) {
+      res.status(400).json({
+      success: "false",
+      error: error.response ? error.response.data : "There was an issue with the server"
+  })
+  }
+})
+
+
+
+
 const port = process.env.PORT || 8000;
 
 app.listen(port, () => {
   console.log(`Server is running http://localhost:${port}`);
 });
-
 
   
