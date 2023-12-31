@@ -263,31 +263,7 @@ app.post("/get-hotels", async (req, res) => {
         const basicAuth = "Basic " + credentials;
         const apiUrl =
           "http://api.tbotechnology.in/TBOHolidays_HotelAPI/HotelSearch";
-        const data = {
-          CheckIn: "2024-01-27",
-          CheckOut: "2024-01-29",
-          HotelCodes: "",
-          CityCode: "115936",
-          CityName: "Dubai",
-          CountryName: "UAE",
-          GuestNationality: "AE",
-          PreferredCurrencyCode: "USD",
-          PaxRooms: [
-            {
-              Adults: 1,
-              Children: 2,
-              ChildrenAges: [1, 16],
-            },
-          ],
-          IsDetailResponse: true,
-          ResponseTime: 23,
-          Filters: {
-            MealType: "All",
-            Refundable: "all",
-            NoOfRooms: 0,
-            StarRating: "All",
-          },
-        };
+        const data = req.body.data
         const response = await axios.post(apiUrl, data, {
           headers: {
             "Content-Type": "application/json",
