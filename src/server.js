@@ -32,6 +32,7 @@ credentials['auth_uri'] = process.env.AUTH_URI;
 credentials['token_uri'] = process.env.TOKEN_URI;
 credentials['auth_provider_x509_cert_url'] = process.env.AUTH_PROVIDER_X509_CERT_URL;
 credentials['client_x509_cert_url'] = process.env.CLIENT_X509_CERT_URL;
+credentials['universe_domain'] = process.env.UNIVERSE_DOMAIN
 admin.initializeApp({
     credential: admin.credential.cert(credentials),
 });
@@ -200,6 +201,7 @@ app.get('/api/getProfileID/:id', async (req, res) => {
 app.get('/api/getHistoryID/:id', async (req, res) => {
   if(req.user && (req.user.user_id === req.params.id)) {
       const id = req.params.id;
+      console.log(id);
       const data = await UserHistory.findOne({"firebase_id": id});
       if(data) res.status(200).send(data._id);
       else res.status(400).send("Failure");
@@ -211,6 +213,8 @@ app.get('/api/getHistoryID/:id', async (req, res) => {
 app.post("/createProfile", async (req, res) => {
   try{
     const obj = req.body;
+    obj.firebase_id = req.user.user_id;
+    console.log(req.user.user_id);
     const {error} = userProfileJoiObject.validate(obj);
     if(error) {
       throw error;
