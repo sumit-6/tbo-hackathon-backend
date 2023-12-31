@@ -173,16 +173,52 @@ app.post("/createProfile", async (req, res) => {
   }
 })
 
-app.post("/createUserHistory", async (req, res) => {
+app.post("/addUserHistory/:id", async (req, res) => {
   try{
-    const obj = req.body;
-    const {error} = userHistoryJoiObject.validate(obj);
-    if(error) {
-      throw error;
-    }
+    const id = req.params.id;
+    const requestObj = req.body;
+    const obj = {};
+    const data = await UserHistory.findById(id);
 
-    const userHistoryObject = new UserHistory(obj);
-    await userHistoryObject.save();
+    if(data._id) {
+      obj.firebase_id = requestObj.firebase_id;
+      data.destinationName.push(requestObj.destinationName);
+      data.hotelName.push(requestObj.hotelName);
+      data.rating.push(requestObj.rating);
+      data.price.push(requestObj.price);
+      data.daysStayed.push(requestObj.daysStayed);
+
+      obj.destinationName = data.destinationName;
+      obj.hotelName = data.hotelName;
+      obj.rating = data.rating;
+      obj.price = data.price;
+      obj.daysStayed = data.daysStayed;
+
+      const {error} = userHistoryJoiObject.validate(obj);
+      if(error) {
+        throw error;
+      }
+
+      
+      await UserHistory.findByIdAndUpdate(id, obj, {new: true});
+    }
+    else {
+      obj.firebase_id = requestObj.firebase_id;
+      obj.destinationName = [requestObj.destinationName];
+      obj.hotelName = [requestObj.hotelName];
+      obj.rating = [requestObj.rating];
+      obj.price = [requestObj.price];
+      obj.daysStayed = [requestObj.daysStayed];
+
+      const {error} = userHistoryJoiObject.validate(obj);
+      if(error) {
+        throw error;
+      }
+
+      const userHistoryObject = new UserHistory(obj);
+      await userHistoryObject.save();
+    }
+    
 
     res.status(200).send("Success");
   } catch(err) {
@@ -212,8 +248,6 @@ app.get("/getUserHistory/:id", async (req, res) => {
       res.status(404).send(`error: ${e}`);
   }
 })
-
-
 
 
 app.get("/",  (req, res) => {
@@ -260,13 +294,8 @@ app.post("/extract-keywords", async (req, res) => {
 const port = process.env.PORT || 8000;
 
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+  console.log(`Server is running http://localhost:${port}`);
 });
-
-
-app.listen(3000, () => {
-    console.log("This app is running on http://localhost:3000");
-  });
 
 
   
