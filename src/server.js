@@ -11,6 +11,7 @@ import mongoSanitize from 'express-mongo-sanitize';
 import { fileURLToPath } from 'url';
 import { userProfileJoiObject, userHistoryJoiObject } from "./joiSchema.js";
 import axios from "axios";
+import admin from 'firebase-admin';
 
 import cors from 'cors';
 import OpenAI from "openai";
@@ -20,6 +21,20 @@ const __dirname = path.dirname(__filename);
 if(process.env.NODE_ENV !== 'production') {
   dotenv.config();
 }
+const credentials = {};
+credentials['type'] = process.env.TYPE;
+credentials['project_id'] = process.env.PROJECT_ID;
+credentials['private_key_id'] = process.env.PRIVATE_KEY_ID;
+credentials['private_key'] = process.env.PRIVATE_KEY;
+credentials['client_email'] = process.env.CLIENT_EMAIL;
+credentials['client_id'] = process.env.CLIENT_ID;
+credentials['auth_uri'] = process.env.AUTH_URI;
+credentials['token_uri'] = process.env.TOKEN_URI;
+credentials['auth_provider_x509_cert_url'] = process.env.AUTH_PROVIDER_X509_CERT_URL;
+credentials['client_x509_cert_url'] = process.env.CLIENT_X509_CERT_URL;
+admin.initializeApp({
+    credential: admin.credential.cert(credentials),
+});
 const app = express();
 
 app.use(helmet.crossOriginOpenerPolicy());
@@ -83,6 +98,20 @@ app.use(
       }
   })
 );
+
+app.use(async (req, res, next) => {
+  const { authtoken } = req.headers;
+  if(authtoken) {
+      try {
+          req.user = await admin.auth().verifyIdToken(authtoken);
+      }
+      catch (e) {
+          return res.sendStatus(400);
+      }
+  }
+  req.user = req.user || {};
+  next();
+});
 
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
@@ -156,6 +185,29 @@ const UserHistorySchema = new Schema({
 
 const UserHistory = mongoose.model('UserHistory', UserHistorySchema);
 
+
+app.get('/api/getProfileID/:id', async (req, res) => {
+  if(req.user && (req.user.user_id === req.params.id)) {
+      const id = req.params.id;
+      const data = await UserProfile.findOne({"firebase_id": id});
+      if(data) res.status(200).send(data._id);
+      else res.status(400).send("Failure");
+  } else {
+      res.status(400).send("Failure");
+  }
+})
+
+app.get('/api/getHistoryID/:id', async (req, res) => {
+  if(req.user && (req.user.user_id === req.params.id)) {
+      const id = req.params.id;
+      const data = await UserHistory.findOne({"firebase_id": id});
+      if(data) res.status(200).send(data._id);
+      else res.status(400).send("Failure");
+  } else {
+      res.status(400).send("Failure");
+  }
+})
+
 app.post("/createProfile", async (req, res) => {
   try{
     const obj = req.body;
@@ -181,7 +233,7 @@ app.post("/addUserHistory/:id", async (req, res) => {
     const obj = {};
     const data = await UserHistory.findById(id);
 
-    if(data._id) {
+    if(data !== null) {
       obj.firebase_id = requestObj.firebase_id;
       data.destinationName.push(requestObj.destinationName);
       data.hotelName.push(requestObj.hotelName);
