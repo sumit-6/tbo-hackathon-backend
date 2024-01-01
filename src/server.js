@@ -18,7 +18,7 @@ import OpenAI from "openai";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-if(process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== 'production') {
   dotenv.config();
 }
 const credentials = {};
@@ -34,7 +34,7 @@ credentials['auth_provider_x509_cert_url'] = process.env.AUTH_PROVIDER_X509_CERT
 credentials['client_x509_cert_url'] = process.env.CLIENT_X509_CERT_URL;
 credentials['universe_domain'] = process.env.UNIVERSE_DOMAIN
 admin.initializeApp({
-    credential: admin.credential.cert(credentials),
+  credential: admin.credential.cert(credentials),
 });
 const app = express();
 
@@ -82,39 +82,39 @@ const connectSrcUrls = [
 const fontSrcUrls = [];
 app.use(
   helmet.contentSecurityPolicy({
-      directives: {
-          defaultSrc: [],
-          connectSrc: ["'self'", ...connectSrcUrls],
-          scriptSrc: ["'unsafe-inline'", "'self'", ...scriptSrcUrls],
-          styleSrc: ["'self'", "'unsafe-inline'", ...styleSrcUrls],
-          workerSrc: ["'self'", "blob:"],
-          objectSrc: [],
-          imgSrc: [
-              "'self'",
-              "blob:",
-              "data:",
-              "https://images.unsplash.com/",
-          ],
-          fontSrc: ["'self'", ...fontSrcUrls],
-      }
+    directives: {
+      defaultSrc: [],
+      connectSrc: ["'self'", ...connectSrcUrls],
+      scriptSrc: ["'unsafe-inline'", "'self'", ...scriptSrcUrls],
+      styleSrc: ["'self'", "'unsafe-inline'", ...styleSrcUrls],
+      workerSrc: ["'self'", "blob:"],
+      objectSrc: [],
+      imgSrc: [
+        "'self'",
+        "blob:",
+        "data:",
+        "https://images.unsplash.com/",
+      ],
+      fontSrc: ["'self'", ...fontSrcUrls],
+    }
   })
 );
 
 app.use(async (req, res, next) => {
   const { authtoken } = req.headers;
-  if(authtoken) {
-      try {
-          req.user = await admin.auth().verifyIdToken(authtoken);
-      }
-      catch (e) {
-          return res.sendStatus(400);
-      }
+  if (authtoken) {
+    try {
+      req.user = await admin.auth().verifyIdToken(authtoken);
+    }
+    catch (e) {
+      return res.sendStatus(400);
+    }
   }
   req.user = req.user || {};
   next();
 });
 
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, authtoken, file");
   next();
@@ -125,8 +125,8 @@ mongoose.connect(dbUrl);
 
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
-db.once('open', function() {
-    console.log("connection open");
+db.once('open', function () {
+  console.log("connection open");
 });
 
 app.use(morgan("combined"));
@@ -141,32 +141,32 @@ app.use(mongoSanitize());
 const secret = process.env.SECRET;
 const MongoDBStore = MongoDBStorePackage(session);
 const store = new MongoDBStore({
-    uri : dbUrl,
-    secret: secret,
-    touchAfter: 24 * 60 * 60
+  uri: dbUrl,
+  secret: secret,
+  touchAfter: 24 * 60 * 60
 });
 
-store.on('error', function(error) {
-    console.log("Session Store Error", error);
+store.on('error', function (error) {
+  console.log("Session Store Error", error);
 })
 app.use(session({
-    store,
-    name: 'session',
-    secret: secret,
-    resave: false,
-    saveUninitialized: true,
-    cookie: {
-        httpOnly: true,
-        //secure: true,
-        expires: Date.now() + 1000 * 60 * 60,
-        maxAge: 1000 * 60 * 60
-    }
+  store,
+  name: 'session',
+  secret: secret,
+  resave: false,
+  saveUninitialized: true,
+  cookie: {
+    httpOnly: true,
+    //secure: true,
+    expires: Date.now() + 1000 * 60 * 60,
+    maxAge: 1000 * 60 * 60
+  }
 }));
 const Schema = mongoose.Schema;
 const UserProfileSchema = new Schema({
   firebase_id: String,
   name: String,
-  email: String, 
+  email: String,
   age: Number,
   country: String,
   state: String,
@@ -188,13 +188,13 @@ const UserHistory = mongoose.model('UserHistory', UserHistorySchema);
 
 
 app.get('/api/getProfileID/:id', async (req, res) => {
-  if(req.user && (req.user.user_id === req.params.id)) {
-      const id = req.params.id;
-      const data = await UserProfile.findOne({"firebase_id": id});
-      if(data) res.status(200).send(data._id);
-      else res.status(400).send("Failure");
+  if (req.user && (req.user.user_id === req.params.id)) {
+    const id = req.params.id;
+    const data = await UserProfile.findOne({ "firebase_id": id });
+    if (data) res.status(200).send(data._id);
+    else res.status(400).send("Failure");
   } else {
-      res.status(400).send("Failure");
+    res.status(400).send("Failure");
   }
 })
 
@@ -205,16 +205,16 @@ app.get('/api/getHistoryID/:id', async (req, res) => {
       if(data) res.status(200).send(data._id);
       else res.status(400).send("Failure");
   } else {
-      res.status(400).send("Failure");
+    res.status(400).send("Failure");
   }
 })
 
 app.post("/createProfile", async (req, res) => {
-  try{
+  try {
     const obj = req.body;
-    
-    const {error} = userProfileJoiObject.validate(obj);
-    if(error) {
+
+    const { error } = userProfileJoiObject.validate(obj);
+    if (error) {
       throw error;
     }
 
@@ -222,20 +222,20 @@ app.post("/createProfile", async (req, res) => {
     await userProfileObj.save();
 
     res.status(200).send("Success");
-  } catch(err) {
+  } catch (err) {
     console.log(err);
     res.status(400).send("Failure");
   }
 })
 
 app.post("/addUserHistory/:id", async (req, res) => {
-  try{
+  try {
     const id = req.params.id;
     const requestObj = req.body;
     const obj = {};
     const data = await UserHistory.findById(id);
 
-    if(data !== null) {
+    if (data !== null) {
       obj.firebase_id = requestObj.firebase_id;
       data.destinationName.push(requestObj.destinationName);
       data.hotelName.push(requestObj.hotelName);
@@ -249,13 +249,13 @@ app.post("/addUserHistory/:id", async (req, res) => {
       obj.price = data.price;
       obj.daysStayed = data.daysStayed;
 
-      const {error} = userHistoryJoiObject.validate(obj);
-      if(error) {
+      const { error } = userHistoryJoiObject.validate(obj);
+      if (error) {
         throw error;
       }
 
-      
-      await UserHistory.findByIdAndUpdate(id, obj, {new: true});
+
+      await UserHistory.findByIdAndUpdate(id, obj, { new: true });
     }
     else {
       obj.firebase_id = requestObj.firebase_id;
@@ -265,18 +265,18 @@ app.post("/addUserHistory/:id", async (req, res) => {
       obj.price = [requestObj.price];
       obj.daysStayed = [requestObj.daysStayed];
 
-      const {error} = userHistoryJoiObject.validate(obj);
-      if(error) {
+      const { error } = userHistoryJoiObject.validate(obj);
+      if (error) {
         throw error;
       }
 
       const userHistoryObject = new UserHistory(obj);
       await userHistoryObject.save();
     }
-    
+
 
     res.status(200).send("Success");
-  } catch(err) {
+  } catch (err) {
     console.log(err);
     res.status(400).send("Failure");
   }
@@ -285,26 +285,26 @@ app.post("/addUserHistory/:id", async (req, res) => {
 app.get("/getUserProfile/:id", async (req, res) => {
   const id = req.params.id;
   try {
-      const data = await UserProfile.findById(id);
-      res.json(data);
+    const data = await UserProfile.findById(id);
+    res.json(data);
   }
-  catch(e) {
-      res.status(404).send(`error: ${e}`);
+  catch (e) {
+    res.status(404).send(`error: ${e}`);
   }
 })
 
 app.get("/getUserHistory/:id", async (req, res) => {
   const id = req.params.id;
   try {
-      const data = await UserHistory.findById(id);
-      res.json(data);
+    const data = await UserHistory.findById(id);
+    res.json(data);
   }
-  catch(e) {
-      res.status(404).send(`error: ${e}`);
+  catch (e) {
+    res.status(404).send(`error: ${e}`);
   }
 })
 
-app.get("/",  (req, res) => {
+app.get("/", (req, res) => {
   res.send("Hello, Welcome to My backend!!");
 })
 
@@ -313,63 +313,63 @@ const openai = new OpenAI({
 });
 
 app.post("/extract-keywords", async (req, res) => {
-    try {
-        const {prompt} = req.body
-        const response = await openai.chat.completions.create({
-            model: "gpt-3.5-turbo",
-            messages: [
-              {
-                "role": "system",
-                "content": "You will be provided with a block of text, and your task is to extract a list of keywords from it."
-              },
-              {
-                "role": "user",
-                "content": `${prompt}`
-              }
-            ],
-            temperature: 0.5,
-            max_tokens: 64,
-            top_p: 1,
-          });
+  try {
+    const { prompt } = req.body
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          "role": "system",
+          "content": "You will be provided with a block of text, and your task is to extract a list of keywords from it. The keywords should be extracted from the block and written in the order - checkin, CheckOut, CityCode, CityName, CountryName Code, GuestNationality's country code, PreferredCurrencyCode, adults in the room, children, then an array of the ages. All of this must be written in the same order as stated here and shown with commas in between each value. If you cant find some of these values from the prompt add whatever value you think is appropriate in there but make sure to always give each keyword back take default country to be india, default state to be delhi and default currency to be INR if not stated otherwise take other values as appropriate defaults, understand the dates properly and give the data back in a format like this dates in form: yyyy-mm-dd, city code in form of a number like dubai's city code is 115936, countrynamecode as dubai's country name code is UAE, guest nationality code like AE, preferred currency code like : USD etc write the city code as you know it like delhi city code is DEL. Other than the parameters given write nothing else no explaination just write the given info just write the given information and no other brackets or punctuations this information will later be used as it is so just write according to the format today's data is 2024-01-01 take this as a reference"
+        },
+        {
+          "role": "user",
+          "content": `${prompt}`
+        }
+      ],
+      temperature: 0,
+      max_tokens: 64,
+      top_p: 1,
+    });
 
 
-        return res.status(200).json({
-            success: "true",
-            data: response.choices[0].message.content
-        })
-    } catch (error) {
-        res.status(400).json({
-            success: "false",
-            error: error.response ? error.response.data : "There was an issue with the server"
-        })
-    }
+    return res.status(200).json({
+      success: "true",
+      data: response.choices[0].message.content
+    })
+  } catch (error) {
+    res.status(400).json({
+      success: "false",
+      error: error.response ? error.response.data : "There was an issue with the server"
+    })
+  }
 })
 
 app.post("/get-hotels", async (req, res) => {
   try {
-        const username = "hackathontest";
-        const password = "Hac@48298799";
-        const credentials = btoa(username + ":" + password);
-        const basicAuth = "Basic " + credentials;
-        const apiUrl =
-          "http://api.tbotechnology.in/TBOHolidays_HotelAPI/HotelSearch";
-        const data = req.body.data
-        const response = await axios.post(apiUrl, data, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: basicAuth,
-          },
-        });
-        console.log(response.data.HotelSearchResults);
-        return res.status(200).json({
-          success: "true",
-          data: response.data.HotelSearchResults
-      })
-      }catch (error) {
-      res.status(400).json({
+    const username = "hackathontest";
+    const password = "Hac@48298799";
+    const credentials = btoa(username + ":" + password);
+    const basicAuth = "Basic " + credentials;
+    const apiUrl =
+      "http://api.tbotechnology.in/TBOHolidays_HotelAPI/HotelSearch";
+    const data = req.body.data
+    const response = await axios.post(apiUrl, data, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: basicAuth,
+      },
+    });
+    console.log(response.data.HotelSearchResults);
+    return res.status(200).json({
+      success: "true",
+      data: response.data.HotelSearchResults
+    })
+  } catch (error) {
+    res.status(400).json({
       success: "false",
       error: error.response ? error.response.data : "There was an issue with the server"
-  })
+    })
   }
 })
 
@@ -382,4 +382,4 @@ app.listen(port, () => {
   console.log(`Server is running http://localhost:${port}`);
 });
 
-  
+
