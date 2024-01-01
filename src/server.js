@@ -213,8 +213,7 @@ app.get('/api/getHistoryID/:id', async (req, res) => {
 app.post("/createProfile", async (req, res) => {
   try{
     const obj = req.body;
-    obj.firebase_id = req.user.user_id;
-    console.log(req.user.user_id);
+    
     const {error} = userProfileJoiObject.validate(obj);
     if(error) {
       throw error;
