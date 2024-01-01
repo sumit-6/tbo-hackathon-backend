@@ -201,7 +201,6 @@ app.get('/api/getProfileID/:id', async (req, res) => {
 app.get('/api/getHistoryID/:id', async (req, res) => {
   if(req.user && (req.user.user_id === req.params.id)) {
       const id = req.params.id;
-      console.log(id);
       const data = await UserHistory.findOne({"firebase_id": id});
       if(data) res.status(200).send(data._id);
       else res.status(400).send("Failure");
