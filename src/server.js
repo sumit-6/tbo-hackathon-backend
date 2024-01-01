@@ -313,22 +313,25 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+const currentDate = new Date().toISOString().split('T')[0];
+
 app.post("/extract-keywords", async (req, res) => {
   try {
-    const { prompt } = req.body
+    const { prompt, stateCodes } = req.body
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
         {
           "role": "system",
-          "content": "You will be provided with a block of text, and your task is to extract a list of keywords from it. The keywords should be extracted from the block and written in the order - checkin, CheckOut, CityCode, CityName, CountryName Code, GuestNationality's country code, PreferredCurrencyCode, adults in the room, children, then an array of the ages. All of this must be written in the same order as stated here and shown with commas in between each value. If you cant find some of these values from the prompt add whatever value you think is appropriate in there but make sure to always give each keyword back take default country to be india, default state to be delhi and default currency to be INR if not stated otherwise take other values as appropriate defaults, understand the dates properly and give the data back in a format like this dates in form: yyyy-mm-dd, city code in form of a number like dubai's city code is 115936, countrynamecode as dubai's country name code is UAE, guest nationality code like AE, preferred currency code like : USD etc write the city code as you know it like delhi city code is DEL. Other than the parameters given write nothing else no explaination just write the given info just write the given information and no other brackets or punctuations this information will later be used as it is so just write according to the format today's data is 2024-01-01 take this as a reference"
+          "content": `You will be provided with a block of text, and your task is to extract a list of keywords from it. The keywords should be extracted from the block and written in the order - checkin, CheckOut, CityCode, CityName, CountryName Code, GuestNationality's country code, PreferredCurrencyCode, adults in the room, children, then an array of the ages. All of this must be written in the same order as stated here and shown with commas in between each value. If you cant find some of these values from the prompt add whatever value you think is appropriate in there but make sure to always give each keyword back take default country to be India, default state to be Delhi and default currency to be INR if not stated otherwise take other values as appropriate defaults, understand the dates properly and give the data back in a format like this dates in form: yyyy-mm-dd, the city codes for all states in India are ${stateCodes} use these to get the city code for example if the user has entered a city in delhi give state code for delhi which is 130443 etc, countrynamecode as IN as these are all from India, guest nationality code is IN, preferred currency code like : INR, for the city code, if the user has given a city in the prompt, then find the state in which this city is from your knowledge and give that state's code as the city code. Other than the parameters given write nothing else no explaination required just write the given information and no other brackets or punctuations this information will later be used as it is so just write according to the format today's data is ${currentDate} take this as a reference so that if user says 2 days from now etc make this a reference
+          Make sure to give some value for each keyword you are supposed to extract even if you dont have information about this in the request put something default in it for date example in the start date you can put into default if nothing is given the same day and the end date to be default by 3 days for stay but make sure to give some value for each keyword properly as stated`
         },
         {
           "role": "user",
           "content": `${prompt}`
         }
       ],
-      temperature: 0,
+      temperature: 0.5,
       max_tokens: 64,
       top_p: 1,
     });
