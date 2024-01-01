@@ -199,13 +199,15 @@ app.get('/api/getProfileID/:id', async (req, res) => {
 })
 
 app.get('/api/getHistoryID/:id', async (req, res) => {
-  if(req.user && (req.user.user_id === req.params.id)) {
-      const id = req.params.id;
-      const data = await UserHistory.findOne({"firebase_id": id});
-      if(data) res.status(200).send(data._id);
-      else res.status(400).send("Failure");
+  console.log(req.user)
+  if (req.user && (req.user.user_id === req.params.id)) {
+    const id = req.params.id;
+    const data = await UserHistory.findOne({ "firebase_id": id });
+    if (data) res.status(200).send(data._id);
+    else res.status(400).send("Failure");
+
   } else {
-    res.status(400).send("Failure");
+    res.status(400).send("Failure1");
   }
 })
 
@@ -316,21 +318,53 @@ const currentDate = new Date().toISOString().split('T')[0];
 
 app.post("/extract-keywords", async (req, res) => {
   try {
-    const { prompt, stateCodes } = req.body
+    const { prompt } = req.body
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
         {
           "role": "system",
-          "content": `You will be provided with a block of text, and your task is to extract a list of keywords from it. The keywords should be extracted from the block and written in the order - checkin, CheckOut, CityCode, CityName, CountryName Code, GuestNationality's country code, PreferredCurrencyCode, adults in the room, children, then an array of the ages. All of this must be written in the same order as stated here and shown with commas in between each value. If you cant find some of these values from the prompt add whatever value you think is appropriate in there but make sure to always give each keyword back take default country to be India, default state to be Delhi and default currency to be INR if not stated otherwise take other values as appropriate defaults, understand the dates properly and give the data back in a format like this dates in form: yyyy-mm-dd, the city codes for all states in India are ${stateCodes} use these to get the city code for example if the user has entered a city in delhi give state code for delhi which is 130443 etc, countrynamecode as IN as these are all from India, guest nationality code is IN, preferred currency code like : INR, for the city code, if the user has given a city in the prompt, then find the state in which this city is from your knowledge and give that state's code as the city code. Other than the parameters given write nothing else no explaination required just write the given information and no other brackets or punctuations this information will later be used as it is so just write according to the format today's data is ${currentDate} take this as a reference so that if user says 2 days from now etc make this a reference
-          Make sure to give some value for each keyword you are supposed to extract even if you dont have information about this in the request put something default in it for date example in the start date you can put into default if nothing is given the same day and the end date to be default by 3 days for stay but make sure to give some value for each keyword properly as stated`
+          "content": `You will be provided with a block of text, and your task is to extract a list of keywords from it. The keywords should be extracted from the block and written in the order - checkin, CheckOut, CityCode, CityName, CountryName Code, GuestNationality's country code, PreferredCurrencyCode, adults in the room, children, then an array of the ages. All of this must be written in the same order as stated here and shown with commas in between each value. If you cant find some of these values from the prompt add whatever value you think is appropriate in there but make sure to always give each keyword back take default country to be India, default state to be Delhi and default currency to be INR if not stated otherwise take other values as appropriate defaults, understand the dates properly and give the data back in a format like this dates in form: yyyy-mm-dd, the city codes for all states in India are given below use these to get the city code 
+          Delhi: 130443
+          Andhra Pradesh: 134040
+          Assam: 150162
+          Bihar: 132429
+          Chhattisgarh: 133672
+          Goa: 141578
+          Gujarat: 141587
+          Haryana: 100881
+          Himachal Pradesh: 150171
+          Jharkhand: 112228
+          Karnataka: 114986
+          Kerala: 114823
+          Madhya Pradesh: 120439
+          Maharashtra: 144306
+          Meghalaya: 138670
+          Mizoram: 110041
+          Odisha: 110789
+          Punjab: 121557
+          Rajasthan: 122175
+          Sikkim: 146091
+          Tamil Nadu: 127067
+          Telangana: 131721
+          Tripura: 100667
+          Uttar Pradesh: 141391
+          Uttarakhand: 121186
+          West Bengal: 113128
+          Chandigarh: 114107
+          Daman and Diu: 116035
+          Jammu and Kashmir: 150363
+          Puducherry: 132561, countrynamecode as IN as these are all from India, guest nationality code is IN, preferred currency code like : INR, for the city code, if the user has given a city in the prompt, then find the state in which this city is from your knowledge and give that state's code as the city code. Other than the parameters given write nothing else no explaination required just write the given information and no other brackets or punctuations this information will later be used as it is so just write according to the format today's data is ${currentDate} take this as a reference so that if user says 2 days from now etc make this a reference
+          set the default value for the number of children and the children array to be 0 and the array to be empty
+          Make sure to give some value for each keyword you are supposed to extract even if you dont have information about this in the request put something default in it for date example in the start date you can put into default if nothing is given the same day and the end date to be default by 3 days for stay but make sure to give some value for each keyword properly as stated
+          The final result should be of format : checkin=2024-01-04, CheckOut=2024-01-09, CityCode=121186, CityName=Uttarakhand, CountryNameCode=IN, GuestNationalityCode=IN, PreferredCurrencyCode=INR, adults in the room=2, children=0`
         },
         {
           "role": "user",
           "content": `${prompt}`
         }
       ],
-      temperature: 0.5,
+      temperature: 0,
       max_tokens: 64,
       top_p: 1,
     });
@@ -375,9 +409,6 @@ app.post("/get-hotels", async (req, res) => {
     })
   }
 })
-
-
-
 
 const port = process.env.PORT || 8000;
 
