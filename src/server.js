@@ -318,7 +318,7 @@ const currentDate = new Date().toISOString().split('T')[0];
 
 app.post("/extract-keywords", async (req, res) => {
   try {
-    const { prompt } = req.body
+    const { prompt, historyData } = req.body
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
@@ -357,7 +357,8 @@ app.post("/extract-keywords", async (req, res) => {
           Puducherry: 132561, countrynamecode as IN as these are all from India, guest nationality code is IN, preferred currency code like : INR, for the city code, if the user has given a city in the prompt, then find the state in which this city is from your knowledge and give that state's code as the city code. Other than the parameters given write nothing else no explaination required just write the given information and no other brackets or punctuations this information will later be used as it is so just write according to the format today's data is ${currentDate} take this as a reference so that if user says 2 days from now etc make this a reference
           set the default value for the number of children and the children array to be 0 and the array to be empty
           Make sure to give some value for each keyword you are supposed to extract even if you dont have information about this in the request put something default in it for date example in the start date you can put into default if nothing is given the same day and the end date to be default by 3 days for stay but make sure to give some value for each keyword properly as stated
-          The final result should be of format : checkin=2024-01-04, CheckOut=2024-01-09, CityCode=121186, CityName=Uttarakhand, CountryNameCode=IN, GuestNationalityCode=IN, PreferredCurrencyCode=INR, adults in the room=2, children=0`
+          The final result should be of format : checkin=2024-01-04, CheckOut=2024-01-09, CityCode=121186, CityName=Uttarakhand, CountryNameCode=IN, GuestNationalityCode=IN, PreferredCurrencyCode=INR, adults in the room=2, children=0
+          Recommend rooms based on user's previous data : ${historyData}`
         },
         {
           "role": "user",
